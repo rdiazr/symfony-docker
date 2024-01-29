@@ -1,0 +1,83 @@
+#https://github.com/vagnercardosoweb/docker-php8
+version: "3.7"
+
+networks:
+  symfony-network:
+    driver: bridge
+
+services:
+  php-fpm:
+    container_name: servidor_php
+    build: ./docker/php
+    restart: unless-stopped    
+    #tty: true
+    # depends_on:
+    #   - mysql
+    volumes:
+      - ./app:/var/www/html
+
+  caddy:
+    container_name: servidor_web
+    image: caddy:2.7.4-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8484:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./app:/var/www/html
+      #- ./docker/logs/caddy/:/var/log/
+    depends_on:
+      - php-fpm
+      #- database
+  
+  #  mariadb:
+  #    image: mariadb
+  #    restart: unless-stopped
+  #    container_name: docker.mariadb
+  #    tty: true
+  #    ports:
+  #      - '3306:3306'
+  #    networks:
+  #      - symfony-network
+  #    volumes:
+  #      - './docker/mysql/mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro'
+  #      - './docker/mysql/dbdata:/var/lib/mysql'
+  #    environment:
+  #      MYSQL_DATABASE: ${MYSQL_DATABASE:-development}
+  #      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+  #      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mysql}
+  #      MYSQL_USER: ${MYSQL_USER:-mysql}
+
+  # mysql:
+  #   image: mysql:5
+  #   restart: unless-stopped
+  #   container_name: docker.mysql
+  #   tty: true
+  #   ports:
+  #     - "3306:3306"
+  #   networks:
+  #     - symfony-network
+  #   volumes:
+  #     - "./docker/mysql/mysql.cnf:/etc/mysql/conf.d/custom.cnf:ro"
+  #     - "./docker/mysql/dbdata:/var/lib/mysql"
+  #   environment:
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-development}
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mysql}
+  #     MYSQL_USER: ${MYSQL_USER:-mysql}
+
+  # phpmyadmin:
+  #   image: phpmyadmin
+  #   container_name: docker.phpmyadmin
+  #   tty: true
+  #   depends_on:
+  #     - mysql
+  #   ports:
+  #     - "8282:80"
+  #   networks:
+  #     - symfony-network
+  #   environment:
+  #     PMA_HOST: mysql
+  #     PMA_ARBITRARY: 1
+  #     PMA_PORT: 3306
