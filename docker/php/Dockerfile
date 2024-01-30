@@ -10,17 +10,18 @@ ENV TZ=Europe/Madrid
 RUN set -eux \
   && apk add --no-cache \
   git zip unzip bash curl tzdata icu-libs \
-  c-client make ca-certificates gmp gettext libssh2 \
+  c-client make gmp gettext \
   libintl libxslt libpng libwebp libjpeg-turbo freetype \
-  linux-headers oniguruma libxslt libpq vips \
+  oniguruma libxslt libpq vips \
   gmp libzip libxml2 freetds
 
 # Install dependencies
 RUN set -eux \
   && apk add --no-cache --virtual .build_deps \
   libpng-dev libwebp-dev libjpeg-turbo-dev freetype-dev \
-  linux-headers oniguruma-dev libxslt-dev postgresql-dev vips-dev \
-  libssh2-dev gmp-dev libzip-dev libxml2-dev freetds-dev \
+  linux-headers oniguruma-dev libxslt-dev vips-dev \
+  gmp-dev libzip-dev libxml2-dev freetds-dev \
+  # PHPIZE_DEPS => 'autoconf 		dpkg-dev dpkg 		file 		g++ 		gcc 		libc-dev 		make 		pkgconf 		re2c'
   $PHPIZE_DEPS \
   \
   # Php extensions
@@ -45,9 +46,9 @@ RUN set -eux \
   gmp \
   \
   # Install xdebug
-  && pecl install -o -f xdebug \
-  && docker-php-ext-enable xdebug \
-  \
+  # && pecl install -o -f xdebug \
+  # && docker-php-ext-enable xdebug \
+  # \
   # Install apcu
   && pecl install -o -f apcu \
   && docker-php-ext-enable apcu \
@@ -69,7 +70,7 @@ RUN wget https://github.com/symfony-cli/symfony-cli/releases/download/v$SYMFONY_
  && chmod +x symfony \
  && mv symfony /usr/local/bin/
 
-# Copy php settings
+# Copy php settings PHP_INI_DIR => '/usr/local/etc/php'
 COPY ./php.ini ${PHP_INI_DIR}/conf.d/99-php.ini
 
 # Usuario Linux-1000 Mac-501

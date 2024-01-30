@@ -1,18 +1,15 @@
 #https://github.com/vagnercardosoweb/docker-php8
 version: "3.7"
 
-networks:
-  symfony-network:
-    driver: bridge
-
 services:
   php-fpm:
     container_name: servidor_php
     build: ./docker/php
-    restart: unless-stopped    
-    #tty: true
-    # depends_on:
-    #   - mysql
+    restart: unless-stopped 
+    networks:
+      - symfony-network       
+    depends_on:
+      - mariadb
     volumes:
       - ./app:/var/www/html
 
@@ -23,61 +20,49 @@ services:
     ports:
       - "8080:80"
       - "8484:443"
+    networks:
+      - symfony-network
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
       - ./app:/var/www/html
-      #- ./docker/logs/caddy/:/var/log/
+      - ./docker/logs/caddy/:/var/log/
     depends_on:
       - php-fpm
-      #- database
+      - mariadb
   
-  #  mariadb:
-  #    image: mariadb
-  #    restart: unless-stopped
-  #    container_name: docker.mariadb
-  #    tty: true
-  #    ports:
-  #      - '3306:3306'
-  #    networks:
-  #      - symfony-network
-  #    volumes:
-  #      - './docker/mysql/mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro'
-  #      - './docker/mysql/dbdata:/var/lib/mysql'
-  #    environment:
-  #      MYSQL_DATABASE: ${MYSQL_DATABASE:-development}
-  #      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-  #      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mysql}
-  #      MYSQL_USER: ${MYSQL_USER:-mysql}
+  mariadb:
+    container_name: servidor_mariadb
+    image: mariadb
+    restart: unless-stopped
+    ports:
+      - '3306:3306'
+    networks:
+      - symfony-network
+    volumes:
+      - './docker/mariadb/mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro'
+      - './docker/mariadb/dbdata:/var/lib/mysql'
+    environment:
+      MYSQL_DATABASE: gmaoDatabase
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: gmao
+      MYSQL_PASSWORD: gmaogmao
+  
+  phpmyadmin:
+    container_name: phpmyadmin    
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - mariadb
+    ports:
+      - "8282:80"
+    networks:
+      - symfony-network
+    environment:
+      - PMA_ARBITRARY=1
+      - UPLOAD_LIMIT=300M
+      - PMA_HOST=mariadb
+      - PMA_USER=root
+      - PMA_PASSWORD=root
 
-  # mysql:
-  #   image: mysql:5
-  #   restart: unless-stopped
-  #   container_name: docker.mysql
-  #   tty: true
-  #   ports:
-  #     - "3306:3306"
-  #   networks:
-  #     - symfony-network
-  #   volumes:
-  #     - "./docker/mysql/mysql.cnf:/etc/mysql/conf.d/custom.cnf:ro"
-  #     - "./docker/mysql/dbdata:/var/lib/mysql"
-  #   environment:
-  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-development}
-  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mysql}
-  #     MYSQL_USER: ${MYSQL_USER:-mysql}
-
-  # phpmyadmin:
-  #   image: phpmyadmin
-  #   container_name: docker.phpmyadmin
-  #   tty: true
-  #   depends_on:
-  #     - mysql
-  #   ports:
-  #     - "8282:80"
-  #   networks:
-  #     - symfony-network
-  #   environment:
-  #     PMA_HOST: mysql
-  #     PMA_ARBITRARY: 1
-  #     PMA_PORT: 3306
+networks:
+  symfony-network:
+    driver: bridge
